@@ -572,22 +572,25 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
     }
 
     void showAllAppsCling() {
-        Cling allAppsCling = (Cling) getTabHost().findViewById(R.id.all_apps_cling);
-        if (!mHasShownAllAppsCling && isDataReady()) {
-            mHasShownAllAppsCling = true;
-            // Calculate the position for the cling punch through
-            int[] offset = new int[2];
-            int[] pos = mWidgetSpacingLayout.estimateCellPosition(mClingFocusedX, mClingFocusedY);
-            mLauncher.getDragLayer().getLocationInDragLayer(this, offset);
-            // PagedViews are centered horizontally but top aligned
-            pos[0] += (getMeasuredWidth() - mWidgetSpacingLayout.getMeasuredWidth()) / 2 +
-                    offset[0];
-            pos[1] += offset[1];
-            mLauncher.showFirstRunAllAppsCling(pos);
-        } else if (!mHasShownAllAppsSortCling && isDataReady() &&
-                allAppsCling != null && allAppsCling.isDismissed()) {
-            mHasShownAllAppsSortCling = true;
-            mLauncher.showFirstRunAllAppsSortCling();
+        AppsCustomizeTabHost tabHost = getTabHost();
+        if (tabHost != null) {
+            Cling allAppsCling = (Cling) tabHost.findViewById(R.id.all_apps_cling);
+            if (!mHasShownAllAppsCling && isDataReady()) {
+                mHasShownAllAppsCling = true;
+                // Calculate the position for the cling punch through
+                int[] offset = new int[2];
+                int[] pos = mWidgetSpacingLayout.estimateCellPosition(mClingFocusedX, mClingFocusedY);
+                mLauncher.getDragLayer().getLocationInDragLayer(this, offset);
+                // PagedViews are centered horizontally but top aligned
+                pos[0] += (getMeasuredWidth() - mWidgetSpacingLayout.getMeasuredWidth()) / 2 +
+                        offset[0];
+                pos[1] += offset[1];
+                mLauncher.showFirstRunAllAppsCling(pos);
+            } else if (!mHasShownAllAppsSortCling && isDataReady() &&
+                    allAppsCling != null && allAppsCling.isDismissed()) {
+                mHasShownAllAppsSortCling = true;
+                mLauncher.showFirstRunAllAppsSortCling();
+            }
         }
     }
 
@@ -613,18 +616,22 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
-    public void onPackagesUpdated() {
-        // TODO: this isn't ideal, but we actually need to delay here. This call is triggered
-        // by a broadcast receiver, and in order for it to work correctly, we need to know that
-        // the AppWidgetService has already received and processed the same broadcast. Since there
-        // is no guarantee about ordering of broadcast receipt, we just delay here. This is a
-        // workaround until we add a callback from AppWidgetService to AppWidgetHost when widget
-        // packages are added, updated or removed.
-        postDelayed(new Runnable() {
-           public void run() {
-               updatePackages();
-           }
-        }, 1500);
+    public void onPackagesUpdated(boolean immediate) {
+        if (immediate) {
+            updatePackages();
+        } else {
+            // TODO: this isn't ideal, but we actually need to delay here. This call is triggered
+            // by a broadcast receiver, and in order for it to work correctly, we need to know that
+            // the AppWidgetService has already received and processed the same broadcast. Since there
+            // is no guarantee about ordering of broadcast receipt, we just delay here. This is a
+            // workaround until we add a callback from AppWidgetService to AppWidgetHost when widget
+            // packages are added, updated or removed.
+            postDelayed(new Runnable() {
+               public void run() {
+                   updatePackages();
+               }
+            }, 1500);
+        }
     }
 
     public void updatePackages() {
@@ -663,7 +670,7 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
     @Override
     public void onClick(View v) {
         // When we have exited all apps or are in transition, disregard clicks
-        if (!mLauncher.isAllAppsCustomizeOpen() ||
+        if (!mLauncher.isAllAppsVisible() ||
                 mLauncher.getWorkspace().isSwitchingState()) return;
 
         if (v instanceof PagedViewIcon) {
@@ -2072,8 +2079,8 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
      * We load an extra page on each side to prevent flashes from scrolling and loading of the
      * widget previews in the background with the AsyncTasks.
      */
-    final static int sLookBehindPageCount = 2;
-    final static int sLookAheadPageCount = 2;
+    final static int sLookBehindPageCount = 3;
+    final static int sLookAheadPageCount = 3;
     protected int getAssociatedLowerPageBound(int page) {
         final int count = getChildCount();
         int windowSize = Math.min(count, sLookBehindPageCount + sLookAheadPageCount + 1);
