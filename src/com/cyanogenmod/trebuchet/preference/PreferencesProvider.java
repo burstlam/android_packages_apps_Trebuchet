@@ -80,7 +80,7 @@ public final class PreferencesProvider {
                 return getBoolean("ui_homescreen_stretch_screens", false);
             }
             public static boolean getShowSearchBar() {
-                return getBoolean("ui_homescreen_general_search", true);
+                return getBoolean("ui_homescreen_general_search", false);
             }
             public static boolean getHideIconLabels() {
                 return getBoolean("ui_homescreen_general_hide_icon_labels", false);
